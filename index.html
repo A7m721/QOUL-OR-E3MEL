@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>قول أو اعمل 🪙</title>
+<meta name="description" content="لعبة بين اتنين: اقلب العملة، قول ولا اعمل؟ نفّذ الكارت واكسب نقطة أو اتنين.">
+<meta name="theme-color" content="#3b5bfd">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="قول أو اعمل">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700&display=swap"></noscript>
+<style>
+:root{--ink:#14143a;--yel:#ffd93d;--card:#fffdf5;--red:#e8505b;--blue:#2b4fd8}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{background:radial-gradient(rgba(255,255,255,.14) 2px,transparent 2px) 0 0/26px 26px,#3b5bfd;color:#fff;font-family:Tajawal,system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(40px + env(safe-area-inset-bottom,0px))}
+main{width:100%;max-width:420px;text-align:center;padding-top:30px}
+h1{font:400 34px Lalezar,Tajawal,sans-serif;text-shadow:3px 3px 0 var(--ink)}
+p.t{font-weight:700;margin:6px 0 18px;line-height:1.7}
+.btn{display:block;width:100%;font:400 22px Lalezar,Tajawal,sans-serif;background:var(--yel);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;box-shadow:5px 5px 0 var(--ink);cursor:pointer;margin-top:14px}
+.btn.alt{background:#fff;font-size:18px}.btn.ok{background:#2fd18b}
+.btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--ink)}
+.row{display:flex;gap:8px;margin-top:12px}
+input{flex:1;min-width:0;padding:10px;border:3px solid var(--ink);border-radius:12px;font:700 18px Tajawal,sans-serif;text-align:center;direction:ltr}
+.nmi{direction:rtl}
+.sm{font:700 15px Tajawal,sans-serif;background:var(--yel);color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:6px 14px;cursor:pointer}
+a.sm,a.gm{text-decoration:none}a.sm{display:inline-block}
+.lbx{margin-top:12px;background:var(--card);color:var(--ink);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:12px;text-align:start}
+.lbx p{font-size:13px;font-weight:700;line-height:1.8}
+.note{margin-top:12px;font-weight:700;min-height:24px;line-height:1.7}
+.err{color:var(--yel)}
+.hint{margin-top:12px;font-size:13px;font-weight:700;line-height:1.8}
+.sc{display:flex;gap:8px;justify-content:center;margin-bottom:6px}
+.pl{flex:1;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:6px 4px;font-weight:700;font-size:14px;box-shadow:3px 3px 0 var(--ink);opacity:.65}
+.pl.on{opacity:1;background:var(--yel);transform:translateY(-3px);box-shadow:5px 5px 0 var(--ink)}
+.pl b{display:block;font:400 28px Lalezar,sans-serif;line-height:1.1}
+.cnt{font-weight:700;font-size:14px;margin:8px 0}
+.coin{width:130px;height:130px;margin:18px auto 4px;border-radius:50%;display:grid;place-items:center;font:400 26px Lalezar,sans-serif;color:#fff;border:6px solid var(--ink);box-shadow:5px 5px 0 var(--ink),inset 0 0 0 8px rgba(255,255,255,.35);background:#9aa3c7}
+.coin.s0{background:var(--red)}.coin.s1{background:var(--blue)}
+.coin.spin{animation:fl .9s ease-out}
+@keyframes fl{0%{transform:rotateY(0) scale(.5)}60%{transform:rotateY(900deg) scale(1.15)}100%{transform:rotateY(1080deg) scale(1)}}
+.cd{margin:10px 0;background:#fff;color:var(--ink);border:4px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;text-align:center}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;color:#fff;font:400 24px Lalezar,sans-serif}
+.cd.say .ch{background:var(--red)}.cd.do .ch{background:var(--blue)}
+.cb{padding:22px 16px;font:400 24px/1.6 Lalezar,Tajawal,sans-serif;min-height:120px;display:grid;place-items:center}
+.cb small{display:block;font:700 13px Tajawal,sans-serif;opacity:.6;margin-bottom:6px}
+.last{margin:8px 0;font-weight:700;font-size:15px}
+.big{font:400 76px Lalezar,sans-serif;text-shadow:4px 4px 0 var(--ink)}
+.res{margin-top:10px;font:400 26px Lalezar,Tajawal,sans-serif}
+.menubtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:20;font:700 14px Tajawal,sans-serif;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:99px;padding:6px 14px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.scrim{position:fixed;inset:0;background:rgba(10,10,40,.55);z-index:30}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(88vw,340px);background:var(--card);color:var(--ink);border-right:4px solid var(--ink);z-index:31;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 20px;overflow:auto;text-align:start}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:18px}
+.dx{border:3px solid var(--ink);background:#fff;color:var(--ink);border-radius:12px;width:38px;height:38px;font-size:16px;cursor:pointer}
+.gm{display:block;width:100%;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:99px;padding:8px 14px;font:700 15px Tajawal,sans-serif;margin-top:10px;cursor:pointer;text-align:start}
+</style>
+</head>
+<body>
+<button class="menubtn" id="menu" aria-expanded="false" aria-controls="drawer">☰ الإعدادات</button>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden><div class="dhead"><b>الإعدادات</b><button class="dx" id="dx" aria-label="إغلاق">✕</button></div><div id="dbody"></div></aside>
+<main id="v"></main>
+<script src="cards.js"></script>
+<script>
+/* Say or do. Same phone, or an online room on its own Firebase project (REST, no SDK).
+   Room: sd (game id, series*1000+game), c, n/<seat> names, f/<turn> = 1 once the coin is flipped, d/<turn> = 1 done / 0 skipped.
+   The coin and the card of every turn come from sd alone, so both phones always see the same thing. */
+const DB='https://foodapp-487b4-default-rtdb.firebaseio.com/sayordo/rooms/',HUB='https://bena-games.vercel.app/',TURNS=20;   /* HUB: link to the games page; empty hides the button */
+const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+const $=s=>document.querySelector(s),V=$('#v');
+const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean=t=>String(t||'').replace(/\s+/g,' ').trim().slice(0,20);
+const saved=()=>{try{return JSON.parse(LS.get('qd_names')||'[]')}catch(e){return[]}};
+const keep=a=>{LS.set('qd_names',JSON.stringify(a))};
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const shuf=(n,seed)=>{const r=rng(seed),a=[...Array(n).keys()];for(let k=n-1;k>0;k--){const j=Math.floor(r()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+const CODE=/^[a-z0-9]{4,10}$/,rnd=()=>Math.floor(Math.random()*1e9);
+const nextSd=s=>Math.floor(s/1000)*1000+(s%1000+1)%1000;
+function newSd(){let s=0;try{s=+LS.get('qd_sd')||0}catch(e){}s=nextSd(s||rnd());LS.set('qd_sd',s);return s}
+const fresh=()=>({m:'',code:'',seat:0,nm:['',''],sd:0,F:[],D:[],ask:null,setup:false,err:'',tm:null,last:'',me:'',open:false});
+let S=fresh();
+/* the turn, the coin and the card */
+const cur=()=>{let t=0;while(t<TURNS&&S.D[t]!=null)t++;return t};
+const coin=(sd,t)=>rng(sd*7+t*13+5)()<.5?0:1;   /* 0 = say (red), 1 = do (blue) */
+function card(t){
+  const side=coin(S.sd,t);let n=0;for(let k=0;k<t;k++)if(coin(S.sd,k)===side)n++;
+  const L=side?window.DO:window.SAY,ord=shuf(L.length,Math.floor(S.sd/1000)+side*99),ln=L[ord[((S.sd%1000)*10+n)%L.length]],i=ln.lastIndexOf('|');
+  return{side,t:i>0?ln.slice(0,i):ln,p:i>0?(+ln.slice(i+1)||1):1};
+}
+function score(){const s=[0,0];for(let t=0;t<TURNS&&S.D[t]!=null;t++)if(S.D[t]===1)s[t%2]+=card(t).p;return s}
+const nm=x=>esc(S.nm[x]||(S.m==='online'?(x===S.seat?'أنت':'التاني'):['اللاعب ١','اللاعب ٢'][x]));
+const nmObj=()=>{const o={};[0,1].forEach(x=>{if(S.nm[x])o[x]=S.nm[x]});return o};
+const offMsg=()=>navigator.onLine===false?'مفيش نت دلوقتي. الأونلاين محتاج نت، وتقدر تلعب على نفس الموبايل.':null;
+
+/* ---------- online ---------- */
+const url=p=>DB+S.code+(p||'')+'.json';
+async function api(method,p,body){
+  const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
+  try{const r=await fetch(url(p),{method,body:body===undefined?undefined:JSON.stringify(body),signal:ac.signal});
+    if(!r.ok){let t='';try{t=(await r.text()).slice(0,80)}catch(e){}const e=new Error(r.status+' '+t);e.status=r.status;throw e}
+    return r.json()}finally{clearTimeout(t)}
+}
+/* weak or lost connection: what I do (flip, decide, restart) waits in a queue and is retried until it gets through */
+let PQ={f:null,d:null,sd:null,bad:0,off:0,t:null};
+const resetQ=()=>{clearTimeout(PQ.t);PQ={f:null,d:null,sd:null,bad:0,off:0,t:null}};
+const waiting=()=>S.m==='online'&&(PQ.off>=2||PQ.bad>0);
+const statusText=()=>waiting()?'النت ضعيف… بنحاول نتصل تاني ⏳':S.err||'';
+async function flush(){
+  clearTimeout(PQ.t);if(S.m!=='online')return;
+  try{
+    if(PQ.sd!=null){await api('PUT','',{sd:PQ.sd,c:Date.now(),n:nmObj()});PQ.sd=null}
+    if(PQ.f!=null){await api('PUT','/f/'+PQ.f,1);PQ.f=null}
+    if(PQ.d){await api('PUT','/d/'+PQ.d.t,PQ.d.v);PQ.d=null}
+    PQ.bad=0;S.err='';
+  }catch(e){
+    if(e.status>=400&&e.status<500){PQ.f=PQ.d=PQ.sd=null;PQ.bad=0;S.err=(e.status===401||e.status===403?'قواعد Firebase رفضت الكتابة':'Firebase رفض الطلب')+' ['+(e.message||'').slice(0,70)+']'}
+    else{PQ.bad++;PQ.t=setTimeout(flush,Math.min(1500*PQ.bad,8000))}
+  }
+  if(S.m==='online')R();
+}
+const fromRoom=d=>[clean(d.n&&d.n[0]),clean(d.n&&d.n[1])];
+async function create(me){
+  me=clean(me||($('#nm')&&$('#nm').value)||saved()[0]);
+  if(!me){S.ask='new';S.err='';return R()}
+  keep([me,saved()[1]||'']);askNotif();
+  try{let code='';for(let k=0;k<5;k++){const a='abcdefghjkmnpqrstuvwxyz23456789';code='';for(let j=0;j<5;j++)code+=a[Math.floor(Math.random()*a.length)];S.code=code;if(!(await api('GET','')))break}
+    const sd=newSd();resetQ();await api('PUT','',{sd,c:Date.now(),n:{0:me}});
+    S={...fresh(),m:'online',code,seat:0,sd,nm:[me,''],me};LS.set('qd_room',code+':0');loop()}
+  catch(e){S.err=offMsg()||'مقدرناش نوصل لسيرفر الغرفة. اتأكد من النت وقواعد Firebase.';R()}
+}
+async function join(code,me){
+  code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(!CODE.test(code)){S.err='الكود مش صح.';return R()}
+  me=clean(me||($('#nm')&&$('#nm').value)||saved()[0]);
+  if(!me){S.ask=code;S.err='';return R()}
+  keep([me,saved()[1]||'']);S.code=code;askNotif();
+  try{const d=await api('GET','');
+    if(!d||d.sd==null){S.code='';S.err='مفيش غرفة بالكود ده.';LS.del('qd_room');return R()}
+    const sv=(LS.get('qd_room')||'').split(':'),seat=sv[0]===code?+sv[1]:1;
+    resetQ();const nms=fromRoom(d);nms[seat]=me;await api('PUT','/n/'+seat,me);
+    S={...fresh(),m:'online',code,seat,sd:d.sd,nm:nms,me};LS.set('qd_room',code+':'+seat);loop()}
+  catch(e){S.code='';S.err=offMsg()||'مقدرناش نوصل لسيرفر الغرفة. اتأكد من النت وقواعد Firebase.';R()}
+}
+function loop(){clearInterval(S.tm);R();poll();S.tm=setInterval(poll,1500)}
+async function poll(){
+  if(S.m!=='online')return;
+  try{
+    const d=await api('GET','');const wasOff=PQ.off>=2;PQ.off=0;if(!d){if(wasOff)R();return}
+    let sd=d.sd;if(PQ.sd!=null){if(sd===PQ.sd)PQ.sd=null;else sd=PQ.sd}   /* my restart is still on its way */
+    const F=[],D=[];
+    if(sd===d.sd)for(let t=0;t<TURNS;t++){F[t]=d.f&&d.f[t]!=null?1:null;D[t]=d.d&&d.d[t]!=null?d.d[t]:null}
+    if(PQ.f!=null){if(F[PQ.f]!=null)PQ.f=null;else F[PQ.f]=1}
+    if(PQ.d){if(D[PQ.d.t]!=null)PQ.d=null;else D[PQ.d.t]=PQ.d.v}
+    const nms=fromRoom(d);if(S.me&&!nms[S.seat])nms[S.seat]=S.me;
+    const k=JSON.stringify([sd,F,D,nms,waiting()]);if(k===S.last&&!wasOff)return;
+    S.last=k;S.sd=sd;S.F=F;S.D=D;S.nm=nms;R();
+  }catch(e){PQ.off++;if(PQ.off===2){S.last='';R()}}
+}
+
+/* ---------- alerts ---------- */
+let SND=LS.get('qd_snd')!=='0',seen='',DP=null;const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent||''),TITLE=document.title;
+function ping(msg){
+  if(SND){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.setValueAtTime(.2,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.5);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.5)}catch(e){}try{navigator.vibrate&&navigator.vibrate([150,80,150])}catch(e){}}
+  if(document.hidden){document.title='🔔 '+msg;try{if(window.Notification&&Notification.permission==='granted')new Notification('قول أو اعمل',{body:msg,icon:'icon-192.png'})}catch(e){}}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.title=TITLE;if(S.m==='online'){flush();poll()}}});
+addEventListener('online',()=>{if(S.m==='online'){flush();poll()}else if(!S.m&&!S.ask&&!S.setup)R()});
+addEventListener('offline',()=>{if(!S.m&&!S.ask&&!S.setup)R()});
+const askNotif=()=>{try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(e){}};
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e});
+
+/* ---------- game ---------- */
+function flip(){
+  const t=cur();if(t>=TURNS||S.F[t]!=null)return;
+  if(S.m==='online'){if(S.seat!==t%2)return;S.F[t]=1;PQ.f=t;S.spin=t;R();flush();return}
+  S.F[t]=1;S.spin=t;R();
+}
+function decide(v){
+  const t=cur();if(t>=TURNS||S.F[t]==null||S.D[t]!=null)return;
+  if(S.m==='online'){if(S.seat===t%2)return;S.D[t]=v;PQ.d={t,v};R();flush();return}
+  S.D[t]=v;R();
+}
+function again(){
+  if(S.m==='online'){const sd=nextSd(S.sd);PQ.sd=sd;PQ.f=PQ.d=null;S.sd=sd;S.F=[];S.D=[];S.last='';R();flush();return}
+  S.sd=newSd();S.F=[];S.D=[];R();
+}
+function leave(){clearInterval(S.tm);resetQ();LS.del('qd_room');S=fresh();R()}
+async function invite(){
+  const link=location.origin+location.pathname+'?room='+S.code,text='تعالى نلعب "قول أو اعمل" — كود الغرفة: '+S.code;
+  if(navigator.share){try{await navigator.share({title:'قول أو اعمل',text,url:link});return}catch(e){if(e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(text+' '+link);const n=$('#n');if(n)n.textContent='اتنسخ الرابط ✔'}catch(e){}
+}
+async function shareGame(){
+  const u=location.origin+location.pathname,text='تعالى نلعب "قول أو اعمل"';
+  if(navigator.share){try{await navigator.share({title:'قول أو اعمل',text,url:u});return}catch(e){if(e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(text+' '+u);const b=$('#dbody [data-act=share]');if(b)b.textContent='اتنسخ الرابط ✔'}catch(e){}
+}
+
+/* ---------- screens ---------- */
+const head=()=>`<h1>قول أو اعمل 🪙</h1>`;
+function R(){
+  if(!(window.SAY&&window.SAY.length&&window.DO&&window.DO.length)){V.innerHTML=head()+'<p class="t err">ملف الكروت (cards.js) ما اتحمّلش. اتأكد إنك رفعته جنب index.html في نفس المكان، وافتح الصفحة تاني.</p>';return}
+  if(S.ask)return askScreen();
+  if(S.setup)return setupScreen();
+  if(!S.m)return home();
+  const t=cur(),online=S.m==='online',sc=score(),p=t%2,me=online?S.seat:-1;
+  const strip=`<div class="sc"><div class="pl${t<TURNS&&p===0?' on':''}">${nm(0)}<b>${sc[0]}</b></div><div class="pl${t<TURNS&&p===1?' on':''}">${nm(1)}<b>${sc[1]}</b></div></div>`;
+  const foot=`<div class="note err" id="n">${statusText()}</div>${online?`<button class="sm" data-act="invite">دعوة 📤 (${S.code})</button> `:''}<button class="sm" data-act="leave">${online?'خروج':'الرئيسية'}</button>`;
+  if(t>=TURNS){
+    const msg=sc[0]===sc[1]?'تعادل 🤝':`🏆 ${nm(sc[0]>sc[1]?0:1)} كسب!`;
+    V.innerHTML=head()+strip+`<div class="big">🏆</div><div class="res">${msg}</div><p class="t">${sc[0]} : ${sc[1]}</p><button class="btn" data-act="again">العبوا تاني 🔁</button>`+foot;return;
+  }
+  const c=card(t),flipped=S.F[t]!=null,canFlip=!flipped&&(!online||me===p),canJudge=flipped&&(!online||me!==p);
+  if(online){
+    if(!flipped&&me===p&&seen!=='f'+S.sd+t){seen='f'+S.sd+t;ping('دورك تقلب العملة 🪙')}
+    if(flipped&&me!==p&&seen!=='j'+S.sd+t){seen='j'+S.sd+t;ping('اتقلبت العملة، دورك تحكم 👀')}
+  }
+  let last='';if(t>0&&!flipped){const lc=card(t-1);last=`<div class="last">${S.D[t-1]===1?`✅ ${nm((t-1)%2)} خد +${lc.p}`:`⏭ ${nm((t-1)%2)} تخطّى`}</div>`}
+  let body;
+  if(!flipped){
+    body=`<div class="coin">🪙</div>${canFlip?'<button class="btn" data-act="flip">اقلب العملة 🪙</button>':`<div class="note">في انتظار ${nm(p)} يقلب العملة…</div>`}`;
+  }else{
+    const spin=S.spin===t?' spin':'';
+    body=`<div class="coin s${c.side}${spin}">${c.side?'اعمل':'قول'}</div><div class="cd ${c.side?'do':'say'}"><div class="ch"><span>${c.side?'اعمل 🎬':'قول 🗣️'}</span><span>${'🚶'.repeat(c.p)} ${c.p===1?'نقطة':'نقطتين'}</span></div><div class="cb"><div>${c.side?'<small>المطلوب</small>':''}${esc(c.t)}</div></div></div>`+
+      (canJudge?`<button class="btn ok" data-act="done">✅ تم التنفيذ (+${c.p})</button><button class="btn alt" data-act="skip">⏭ تخطّي (0)</button>`:`<div class="note">${online?`⏳ في انتظار حُكم ${nm(1-p)}`:''}</div>`);
+  }
+  V.innerHTML=head()+strip+`<div class="cnt">الدور ${t+1} من ${TURNS} · ${nm(p)}</div>`+last+body+foot;
+}
+function home(){
+  V.innerHTML=head()+`<p class="t">اقلب العملة: قول ولا اعمل؟ نفّذوا الكارت واكسبوا نقطة أو اتنين.</p>
+  <button class="btn" data-act="local">ابدأ اللعب 🎴</button>
+  <button class="btn alt" data-act="onl" aria-expanded="${!!S.open}">🌍 العبوا من مكانين مختلفين</button>
+  ${S.open?`<div class="lbx"><p>اعمل غرفة وابعت الكود للتاني، أو ادخل بالكود اللي وصلك. اللي مش بيلعب بيحكم: هل التنفيذ تم؟</p><div class="row"><input class="nmi" id="nm" maxlength="20" placeholder="اسمك" value="${esc(saved()[0]||'')}"></div><div class="row"><button class="sm" data-act="new">غرفة جديدة</button></div><div class="row"><input id="rc" maxlength="10" placeholder="كود الغرفة" autocapitalize="off"><button class="sm" data-act="join">دخول</button></div></div>`:''}
+  ${HUB?`<a class="sm" style="margin-top:18px" href="${HUB}">🏠 كل الألعاب</a>`:''}
+  ${navigator.onLine===false?'<p class="hint">مفيش نت دلوقتي. تقدر تلعب على نفس الموبايل، والأونلاين محتاج نت.</p>':''}
+  <div class="note err" id="n">${S.err||''}</div>`;
+}
+function setupScreen(){
+  const v=saved();
+  V.innerHTML=head()+`<p class="t">اكتبوا أسماءكم</p><div class="lbx"><div class="row"><input class="nmi" id="n0" maxlength="20" placeholder="اللاعب ١" value="${esc(v[0]||'')}"></div><div class="row"><input class="nmi" id="n1" maxlength="20" placeholder="اللاعب ٢" value="${esc(v[1]||'')}"></div></div><button class="btn" data-act="begin">يلا نلعب 🪙</button><button class="sm" style="margin-top:18px" data-act="leave">رجوع</button>`;
+}
+function askScreen(){
+  V.innerHTML=head()+`<p class="t">اكتب اسمك عشان التاني يشوفه</p><div class="lbx"><div class="row"><input class="nmi" id="nm2" maxlength="20" placeholder="اسمك" value="${esc(saved()[0]||'')}"></div></div><div class="note err">${S.err||''}</div><button class="btn" data-act="askgo">تمام</button><button class="sm" style="margin-top:18px" data-act="leave">رجوع</button>`;
+}
+
+/* ---------- settings drawer ---------- */
+function fillDrawer(){
+  $('#dbody').innerHTML=`${HUB?`<a class="gm" href="${HUB}">🏠 رجوع لقايمة الألعاب</a>`:''}<button class="gm" data-act="snd">${SND?'🔊 الصوت والاهتزاز شغالين':'🔇 الصوت والاهتزاز مكتومين'}</button><button class="gm" data-act="share">📤 مشاركة اللعبة</button>${DP?'<button class="gm" data-act="inst">📲 ثبّت اللعبة</button>':''}${IOS&&!DP?'<p class="hint">للتثبيت على الآيفون: زرار المشاركة ثم «إضافة إلى الشاشة الرئيسية»</p>':''}`;
+}
+const openD=()=>{fillDrawer();$('#drawer').hidden=false;$('#scrim').hidden=false;$('#menu').setAttribute('aria-expanded','true')};
+const closeD=()=>{$('#drawer').hidden=true;$('#scrim').hidden=true;$('#menu').setAttribute('aria-expanded','false')};
+const onClick=e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  const a=b.dataset.act;
+  if(a==='local'){S={...fresh(),setup:true};R()}
+  else if(a==='begin'){const n=[clean($('#n0').value),clean($('#n1').value)];keep(n);S={...fresh(),m:'local',nm:n,sd:newSd()};R()}
+  else if(a==='askgo'){const me=clean($('#nm2').value);if(!me){S.err='اكتب اسمك الأول.';return R()}const t=S.ask;keep([me,saved()[1]||'']);S.ask=null;S.err='';t==='new'?create(me):join(t,me)}
+  else if(a==='onl'){S.open=!S.open;R()}
+  else if(a==='new')create();else if(a==='join')join($('#rc').value);
+  else if(a==='flip')flip();else if(a==='done')decide(1);else if(a==='skip')decide(0);
+  else if(a==='again')again();else if(a==='invite')invite();else if(a==='leave')leave();
+  else if(a==='share')shareGame();
+  else if(a==='snd'){SND=!SND;LS.set('qd_snd',SND?'1':'0');fillDrawer()}
+  else if(a==='inst'&&DP){DP.prompt();DP.userChoice.finally(()=>{DP=null;fillDrawer()})}
+};
+V.addEventListener('click',onClick);$('#dbody').addEventListener('click',onClick);
+$('#menu').addEventListener('click',openD);$('#dx').addEventListener('click',closeD);$('#scrim').addEventListener('click',closeD);
+addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
+(function(){
+  let c='';try{c=new URLSearchParams(location.search).get('room')||''}catch(e){}
+  if(!c){try{const s=LS.get('qd_room');if(s)c=s.split(':')[0]}catch(e){}}
+  if(c){try{history.replaceState(null,'',location.pathname)}catch(e){}join(c)}else R();
+})();
+try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+</script>
+</body>
+</html>
