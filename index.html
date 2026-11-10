@@ -40,8 +40,11 @@ a.sm,a.gm{text-decoration:none}a.sm{display:inline-block}
 .cnt{font-weight:700;font-size:14px;margin:8px 0}
 .coin{width:130px;height:130px;margin:18px auto 4px;border-radius:50%;display:grid;place-items:center;font:400 26px Lalezar,sans-serif;color:#fff;border:6px solid var(--ink);box-shadow:5px 5px 0 var(--ink),inset 0 0 0 8px rgba(255,255,255,.35);background:#9aa3c7}
 .coin.s0{background:var(--red)}.coin.s1{background:var(--blue)}
-.coin.spin{animation:fl .9s ease-out}
-@keyframes fl{0%{transform:rotateY(0) scale(.5)}60%{transform:rotateY(900deg) scale(1.15)}100%{transform:rotateY(1080deg) scale(1)}}
+.coin.spin{animation:toss 2.6s cubic-bezier(.25,.8,.35,1)}
+@keyframes toss{0%{transform:translateY(0) rotateY(0) scale(.7)}35%{transform:translateY(-70px) rotateY(720deg) scale(1.1)}70%{transform:translateY(-18px) rotateY(1440deg) scale(1.05)}100%{transform:translateY(0) rotateY(2160deg) scale(1)}}
+.mds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 4px}
+.mc{font:700 15px Tajawal,sans-serif;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:9px 4px;cursor:pointer}
+.mc.on{background:var(--yel);box-shadow:3px 3px 0 var(--ink);transform:translateY(-2px)}
 .cd{margin:10px 0;background:#fff;color:var(--ink);border:4px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;text-align:center}
 .ch{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;color:#fff;font:400 24px Lalezar,sans-serif}
 .cd.say .ch{background:var(--red)}.cd.do .ch{background:var(--blue)}
@@ -78,16 +81,17 @@ const keep=a=>{LS.set('qd_names',JSON.stringify(a))};
 const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 const shuf=(n,seed)=>{const r=rng(seed),a=[...Array(n).keys()];for(let k=n-1;k>0;k--){const j=Math.floor(r()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
 const CODE=/^[a-z0-9]{4,10}$/,rnd=()=>Math.floor(Math.random()*1e9);
+const MD=['👥 الأصدقاء','❤️ شخصين','😂 العائلة','🔥 جريء (+18)'],MDD=['أسئلة صراحة وتحديات كوميدية بين الأصحاب','صراحة وتحديات رومانسية خفيفة بينكم','كروت تناسب العيلة كلها','أسئلة محرجة وتحديات جريئة للبالغين، من غير أي محتوى فاضح'];
 const nextSd=s=>Math.floor(s/1000)*1000+(s%1000+1)%1000;
 function newSd(){let s=0;try{s=+LS.get('qd_sd')||0}catch(e){}s=nextSd(s||rnd());LS.set('qd_sd',s);return s}
-const fresh=()=>({m:'',code:'',seat:0,nm:['',''],sd:0,F:[],D:[],ask:null,setup:false,err:'',tm:null,last:'',me:'',open:false});
+const fresh=()=>({m:'',code:'',seat:0,nm:['',''],sd:0,md:Math.min(3,Math.max(0,+LS.get('qd_md')||0)),F:[],D:[],shown:-1,anim:-1,face:0,ask:null,setup:false,err:'',tm:null,last:'',me:'',open:false});
 let S=fresh();
 /* the turn, the coin and the card */
 const cur=()=>{let t=0;while(t<TURNS&&S.D[t]!=null)t++;return t};
 const coin=(sd,t)=>rng(sd*7+t*13+5)()<.5?0:1;   /* 0 = say (red), 1 = do (blue) */
 function card(t){
   const side=coin(S.sd,t);let n=0;for(let k=0;k<t;k++)if(coin(S.sd,k)===side)n++;
-  const L=side?window.DO:window.SAY,ord=shuf(L.length,Math.floor(S.sd/1000)+side*99),ln=L[ord[((S.sd%1000)*10+n)%L.length]],i=ln.lastIndexOf('|');
+  const M=window.MODES[S.md]||window.MODES[0],L=side?(S.m==='online'?window.DOO.concat(M.doO):window.DOL.concat(M.doL)):window.SAY.concat(M.say),ord=shuf(L.length,Math.floor(S.sd/1000)+side*99+S.md*7),ln=L[ord[((S.sd%1000)*10+n)%L.length]],i=ln.lastIndexOf('|');
   return{side,t:i>0?ln.slice(0,i):ln,p:i>0?(+ln.slice(i+1)||1):1};
 }
 function score(){const s=[0,0];for(let t=0;t<TURNS&&S.D[t]!=null;t++)if(S.D[t]===1)s[t%2]+=card(t).p;return s}
@@ -111,7 +115,7 @@ const statusText=()=>waiting()?'النت ضعيف… بنحاول نتصل تا�
 async function flush(){
   clearTimeout(PQ.t);if(S.m!=='online')return;
   try{
-    if(PQ.sd!=null){await api('PUT','',{sd:PQ.sd,c:Date.now(),n:nmObj()});PQ.sd=null}
+    if(PQ.sd!=null){await api('PUT','',{sd:PQ.sd,c:Date.now(),md:S.md,n:nmObj()});PQ.sd=null}
     if(PQ.f!=null){await api('PUT','/f/'+PQ.f,1);PQ.f=null}
     if(PQ.d){await api('PUT','/d/'+PQ.d.t,PQ.d.v);PQ.d=null}
     PQ.bad=0;S.err='';
@@ -127,8 +131,8 @@ async function create(me){
   if(!me){S.ask='new';S.err='';return R()}
   keep([me,saved()[1]||'']);askNotif();
   try{let code='';for(let k=0;k<5;k++){const a='abcdefghjkmnpqrstuvwxyz23456789';code='';for(let j=0;j<5;j++)code+=a[Math.floor(Math.random()*a.length)];S.code=code;if(!(await api('GET','')))break}
-    const sd=newSd();resetQ();await api('PUT','',{sd,c:Date.now(),n:{0:me}});
-    S={...fresh(),m:'online',code,seat:0,sd,nm:[me,''],me};LS.set('qd_room',code+':0');loop()}
+    const sd=newSd(),md=S.md;resetQ();await api('PUT','',{sd,c:Date.now(),md,n:{0:me}});
+    S={...fresh(),m:'online',code,seat:0,sd,md,nm:[me,''],me};LS.set('qd_room',code+':0');loop()}
   catch(e){S.err=offMsg()||'مقدرناش نوصل لسيرفر الغرفة. اتأكد من النت وقواعد Firebase.';R()}
 }
 async function join(code,me){
@@ -141,7 +145,7 @@ async function join(code,me){
     if(!d||d.sd==null){S.code='';S.err='مفيش غرفة بالكود ده.';LS.del('qd_room');return R()}
     const sv=(LS.get('qd_room')||'').split(':'),seat=sv[0]===code?+sv[1]:1;
     resetQ();const nms=fromRoom(d);nms[seat]=me;await api('PUT','/n/'+seat,me);
-    S={...fresh(),m:'online',code,seat,sd:d.sd,nm:nms,me};LS.set('qd_room',code+':'+seat);loop()}
+    S={...fresh(),m:'online',code,seat,sd:d.sd,md:d.md||0,nm:nms,me};LS.set('qd_room',code+':'+seat);loop()}
   catch(e){S.code='';S.err=offMsg()||'مقدرناش نوصل لسيرفر الغرفة. اتأكد من النت وقواعد Firebase.';R()}
 }
 function loop(){clearInterval(S.tm);R();poll();S.tm=setInterval(poll,1500)}
@@ -154,9 +158,10 @@ async function poll(){
     if(sd===d.sd)for(let t=0;t<TURNS;t++){F[t]=d.f&&d.f[t]!=null?1:null;D[t]=d.d&&d.d[t]!=null?d.d[t]:null}
     if(PQ.f!=null){if(F[PQ.f]!=null)PQ.f=null;else F[PQ.f]=1}
     if(PQ.d){if(D[PQ.d.t]!=null)PQ.d=null;else D[PQ.d.t]=PQ.d.v}
-    const nms=fromRoom(d);if(S.me&&!nms[S.seat])nms[S.seat]=S.me;
-    const k=JSON.stringify([sd,F,D,nms,waiting()]);if(k===S.last&&!wasOff)return;
-    S.last=k;S.sd=sd;S.F=F;S.D=D;S.nm=nms;R();
+    const nms=fromRoom(d);if(S.me&&!nms[S.seat])nms[S.seat]=S.me;const md=d.md||0;
+    const k=JSON.stringify([sd,md,F,D,nms,waiting()]);if(k===S.last&&!wasOff)return;
+    if(sd!==S.sd){S.shown=-1;S.anim=-1}
+    S.last=k;S.sd=sd;S.md=md;S.F=F;S.D=D;S.nm=nms;R();
   }catch(e){PQ.off++;if(PQ.off===2){S.last='';R()}}
 }
 
@@ -175,8 +180,8 @@ addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e});
 /* ---------- game ---------- */
 function flip(){
   const t=cur();if(t>=TURNS||S.F[t]!=null)return;
-  if(S.m==='online'){if(S.seat!==t%2)return;S.F[t]=1;PQ.f=t;S.spin=t;R();flush();return}
-  S.F[t]=1;S.spin=t;R();
+  if(S.m==='online'){if(S.seat!==t%2)return;S.F[t]=1;PQ.f=t;R();flush();return}
+  S.F[t]=1;R();
 }
 function decide(v){
   const t=cur();if(t>=TURNS||S.F[t]==null||S.D[t]!=null)return;
@@ -184,8 +189,8 @@ function decide(v){
   S.D[t]=v;R();
 }
 function again(){
-  if(S.m==='online'){const sd=nextSd(S.sd);PQ.sd=sd;PQ.f=PQ.d=null;S.sd=sd;S.F=[];S.D=[];S.last='';R();flush();return}
-  S.sd=newSd();S.F=[];S.D=[];R();
+  if(S.m==='online'){const sd=nextSd(S.sd);PQ.sd=sd;PQ.f=PQ.d=null;S.sd=sd;S.F=[];S.D=[];S.last='';S.shown=-1;S.anim=-1;R();flush();return}
+  S.sd=newSd();S.F=[];S.D=[];S.shown=-1;S.anim=-1;R();
 }
 function leave(){clearInterval(S.tm);resetQ();LS.del('qd_room');S=fresh();R()}
 async function invite(){
@@ -202,7 +207,7 @@ async function shareGame(){
 /* ---------- screens ---------- */
 const head=()=>`<h1>قول أو اعمل 🪙</h1>`;
 function R(){
-  if(!(window.SAY&&window.SAY.length&&window.DO&&window.DO.length)){V.innerHTML=head()+'<p class="t err">ملف الكروت (cards.js) ما اتحمّلش. اتأكد إنك رفعته جنب index.html في نفس المكان، وافتح الصفحة تاني.</p>';return}
+  if(!(window.SAY&&window.SAY.length&&window.DOL&&window.DOO&&window.MODES&&window.MODES.length)){V.innerHTML=head()+'<p class="t err">ملف الكروت (cards.js) ما اتحمّلش. اتأكد إنك رفعته جنب index.html في نفس المكان، وافتح الصفحة تاني.</p>';return}
   if(S.ask)return askScreen();
   if(S.setup)return setupScreen();
   if(!S.m)return home();
@@ -213,24 +218,38 @@ function R(){
     const msg=sc[0]===sc[1]?'تعادل 🤝':`🏆 ${nm(sc[0]>sc[1]?0:1)} كسب!`;
     V.innerHTML=head()+strip+`<div class="big">🏆</div><div class="res">${msg}</div><p class="t">${sc[0]} : ${sc[1]}</p><button class="btn" data-act="again">العبوا تاني 🔁</button>`+foot;return;
   }
-  const c=card(t),flipped=S.F[t]!=null,canFlip=!flipped&&(!online||me===p),canJudge=flipped&&(!online||me!==p);
+  const c=card(t),flipped=S.F[t]!=null,landed=flipped&&S.shown===t,canFlip=!flipped&&(!online||me===p),canJudge=landed&&(!online||me!==p);
   if(online){
     if(!flipped&&me===p&&seen!=='f'+S.sd+t){seen='f'+S.sd+t;ping('دورك تقلب العملة 🪙')}
     if(flipped&&me!==p&&seen!=='j'+S.sd+t){seen='j'+S.sd+t;ping('اتقلبت العملة، دورك تحكم 👀')}
   }
   let last='';if(t>0&&!flipped){const lc=card(t-1);last=`<div class="last">${S.D[t-1]===1?`✅ ${nm((t-1)%2)} خد +${lc.p}`:`⏭ ${nm((t-1)%2)} تخطّى`}</div>`}
+  const cnt=`<div class="cnt">الدور ${t+1} من ${TURNS} · ${nm(p)} · ${MD[S.md]}</div>`;
   let body;
   if(!flipped){
     body=`<div class="coin">🪙</div>${canFlip?'<button class="btn" data-act="flip">اقلب العملة 🪙</button>':`<div class="note">في انتظار ${nm(p)} يقلب العملة…</div>`}`;
+  }else if(!landed){   /* the coin is still in the air: no card yet */
+    body=`<div id="coin" class="coin s${S.face} spin">${S.face?'اعمل':'قول'}</div><div class="note">العملة بتلف… 🪙</div>`;
   }else{
-    const spin=S.spin===t?' spin':'';
-    body=`<div class="coin s${c.side}${spin}">${c.side?'اعمل':'قول'}</div><div class="cd ${c.side?'do':'say'}"><div class="ch"><span>${c.side?'اعمل 🎬':'قول 🗣️'}</span><span>${'🚶'.repeat(c.p)} ${c.p===1?'نقطة':'نقطتين'}</span></div><div class="cb"><div>${c.side?'<small>المطلوب</small>':''}${esc(c.t)}</div></div></div>`+
+    body=`<div class="coin s${c.side}">${c.side?'اعمل':'قول'}</div><div class="cd ${c.side?'do':'say'}"><div class="ch"><span>${c.side?'اعمل 🎬':'قول 🗣️'}</span><span>${'🚶'.repeat(c.p)} ${c.p===1?'نقطة':'نقطتين'}</span></div><div class="cb"><div>${c.side?'<small>المطلوب</small>':''}${esc(c.t)}</div></div></div>`+
       (canJudge?`<button class="btn ok" data-act="done">✅ تم التنفيذ (+${c.p})</button><button class="btn alt" data-act="skip">⏭ تخطّي (0)</button>`:`<div class="note">${online?`⏳ في انتظار حُكم ${nm(1-p)}`:''}</div>`);
   }
-  V.innerHTML=head()+strip+`<div class="cnt">الدور ${t+1} من ${TURNS} · ${nm(p)}</div>`+last+body+foot;
+  V.innerHTML=head()+strip+cnt+last+body+foot;
+  if(flipped&&!landed)startCoin(t);
+}
+/* the coin flips for a couple of seconds, changing face, and lands on the result before the card shows */
+function startCoin(t){
+  if(S.anim===t)return;S.anim=t;const side=card(t).side,N=12;let i=0;
+  const step=()=>{
+    if(S.anim!==t||!S.m||cur()!==t)return;
+    S.face=(side+N-1-i)%2;const c=$('#coin');if(c){c.className='coin s'+S.face+' spin';c.textContent=S.face?'اعمل':'قول'}
+    i++;if(i<N)setTimeout(step,90+i*22);else setTimeout(()=>{if(S.anim===t){S.shown=t;S.anim=-1;R()}},500);
+  };
+  step();
 }
 function home(){
   V.innerHTML=head()+`<p class="t">اقلب العملة: قول ولا اعمل؟ نفّذوا الكارت واكسبوا نقطة أو اتنين.</p>
+  <div class="mds">${MD.map((n,i)=>`<button class="mc${i===S.md?' on':''}" data-md="${i}">${n}</button>`).join('')}</div><p class="hint" style="margin:4px 0 0">${MDD[S.md]}</p>
   <button class="btn" data-act="local">ابدأ اللعب 🎴</button>
   <button class="btn alt" data-act="onl" aria-expanded="${!!S.open}">🌍 العبوا من مكانين مختلفين</button>
   ${S.open?`<div class="lbx"><p>اعمل غرفة وابعت الكود للتاني، أو ادخل بالكود اللي وصلك. اللي مش بيلعب بيحكم: هل التنفيذ تم؟</p><div class="row"><input class="nmi" id="nm" maxlength="20" placeholder="اسمك" value="${esc(saved()[0]||'')}"></div><div class="row"><button class="sm" data-act="new">غرفة جديدة</button></div><div class="row"><input id="rc" maxlength="10" placeholder="كود الغرفة" autocapitalize="off"><button class="sm" data-act="join">دخول</button></div></div>`:''}
@@ -254,6 +273,7 @@ const openD=()=>{fillDrawer();$('#drawer').hidden=false;$('#scrim').hidden=false
 const closeD=()=>{$('#drawer').hidden=true;$('#scrim').hidden=true;$('#menu').setAttribute('aria-expanded','false')};
 const onClick=e=>{
   const b=e.target.closest('button');if(!b||b.disabled)return;
+  if(b.dataset.md!=null){S.md=+b.dataset.md;LS.set('qd_md',S.md);return R()}
   const a=b.dataset.act;
   if(a==='local'){S={...fresh(),setup:true};R()}
   else if(a==='begin'){const n=[clean($('#n0').value),clean($('#n1').value)];keep(n);S={...fresh(),m:'local',nm:n,sd:newSd()};R()}
