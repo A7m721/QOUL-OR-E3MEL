@@ -50,6 +50,8 @@ a.sm,a.gm{text-decoration:none}a.sm{display:inline-block}
 .cd.say .ch{background:var(--red)}.cd.do .ch{background:var(--blue)}
 .cb{padding:22px 16px;font:400 24px/1.6 Lalezar,Tajawal,sans-serif;min-height:120px;display:grid;place-items:center}
 .cb small{display:block;font:700 13px Tajawal,sans-serif;opacity:.6;margin-bottom:6px}
+.lbx textarea{width:100%;height:84px;margin-top:6px;padding:8px;border:3px solid var(--ink);border-radius:12px;font:700 16px Tajawal,sans-serif;direction:rtl;resize:none;color:var(--ink);background:#fff}
+.lbx .ans{margin-top:6px;font:700 17px/1.7 Tajawal,sans-serif;white-space:pre-wrap;word-break:break-word;min-height:28px}
 .last{margin:8px 0;font-weight:700;font-size:15px}
 .big{font:400 76px Lalezar,sans-serif;text-shadow:4px 4px 0 var(--ink)}
 .res{margin-top:10px;font:400 26px Lalezar,Tajawal,sans-serif}
@@ -69,7 +71,8 @@ a.sm,a.gm{text-decoration:none}a.sm{display:inline-block}
 <script src="cards.js"></script>
 <script>
 /* Say or do. Same phone, or an online room on its own Firebase project (REST, no SDK).
-   Room: sd (game id, series*1000+game), c, n/<seat> names, f/<turn> = 1 once the coin is flipped, d/<turn> = 1 done / 0 skipped.
+   Room: sd (game id, series*1000+game), c, md (play mode), n/<seat> names, f/<turn> = 1 once the coin is flipped,
+   a/<turn> = the typed answer, g/<turn> = 1 once the answer is sent to the judge, d/<turn> = 1 done / 0 skipped.
    The coin and the card of every turn come from sd alone, so both phones always see the same thing. */
 const DB='https://foodapp-487b4-default-rtdb.firebaseio.com/sayordo/rooms/',HUB='https://bena-games.vercel.app/',TURNS=20;   /* HUB: link to the games page; empty hides the button */
 const LS={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
@@ -84,7 +87,7 @@ const CODE=/^[a-z0-9]{4,10}$/,rnd=()=>Math.floor(Math.random()*1e9);
 const MD=['👥 الأصدقاء','❤️ شخصين','😂 العائلة','🔥 جريء (+18)'],MDD=['أسئلة صراحة وتحديات كوميدية بين الأصحاب','صراحة وتحديات رومانسية خفيفة بينكم','كروت تناسب العيلة كلها','أسئلة محرجة وتحديات جريئة للبالغين، من غير أي محتوى فاضح'];
 const nextSd=s=>Math.floor(s/1000)*1000+(s%1000+1)%1000;
 function newSd(){let s=0;try{s=+LS.get('qd_sd')||0}catch(e){}s=nextSd(s||rnd());LS.set('qd_sd',s);return s}
-const fresh=()=>({m:'',code:'',seat:0,nm:['',''],sd:0,md:Math.min(3,Math.max(0,+LS.get('qd_md')||0)),F:[],D:[],shown:-1,anim:-1,face:0,ask:null,setup:false,err:'',tm:null,last:'',me:'',open:false});
+const fresh=()=>({m:'',code:'',seat:0,nm:['',''],sd:0,md:Math.min(3,Math.max(0,+LS.get('qd_md')||0)),F:[],D:[],A:[],G:[],shown:-1,anim:-1,face:0,ask:null,setup:false,err:'',tm:null,last:'',me:'',open:false});
 let S=fresh();
 /* the turn, the coin and the card */
 const cur=()=>{let t=0;while(t<TURNS&&S.D[t]!=null)t++;return t};
@@ -108,8 +111,8 @@ async function api(method,p,body){
     return r.json()}finally{clearTimeout(t)}
 }
 /* weak or lost connection: what I do (flip, decide, restart) waits in a queue and is retried until it gets through */
-let PQ={f:null,d:null,sd:null,bad:0,off:0,t:null};
-const resetQ=()=>{clearTimeout(PQ.t);PQ={f:null,d:null,sd:null,bad:0,off:0,t:null}};
+let PQ={f:null,a:null,g:null,d:null,sd:null,bad:0,off:0,t:null};
+const resetQ=()=>{clearTimeout(PQ.t);PQ={f:null,a:null,g:null,d:null,sd:null,bad:0,off:0,t:null}};
 const waiting=()=>S.m==='online'&&(PQ.off>=2||PQ.bad>0);
 const statusText=()=>waiting()?'النت ضعيف… بنحاول نتصل تاني ⏳':S.err||'';
 async function flush(){
@@ -117,10 +120,12 @@ async function flush(){
   try{
     if(PQ.sd!=null){await api('PUT','',{sd:PQ.sd,c:Date.now(),md:S.md,n:nmObj()});PQ.sd=null}
     if(PQ.f!=null){await api('PUT','/f/'+PQ.f,1);PQ.f=null}
+    if(PQ.a){const x=PQ.a;await api('PUT','/a/'+x.t,x.v);if(PQ.a===x)PQ.a=null}
+    if(PQ.g!=null){await api('PUT','/g/'+PQ.g,1);PQ.g=null}
     if(PQ.d){await api('PUT','/d/'+PQ.d.t,PQ.d.v);PQ.d=null}
     PQ.bad=0;S.err='';
   }catch(e){
-    if(e.status>=400&&e.status<500){PQ.f=PQ.d=PQ.sd=null;PQ.bad=0;S.err=(e.status===401||e.status===403?'قواعد Firebase رفضت الكتابة':'Firebase رفض الطلب')+' ['+(e.message||'').slice(0,70)+']'}
+    if(e.status>=400&&e.status<500){PQ.f=PQ.a=PQ.g=PQ.d=PQ.sd=null;PQ.bad=0;S.err=(e.status===401||e.status===403?'قواعد Firebase رفضت الكتابة':'Firebase رفض الطلب')+' ['+(e.message||'').slice(0,70)+']'}
     else{PQ.bad++;PQ.t=setTimeout(flush,Math.min(1500*PQ.bad,8000))}
   }
   if(S.m==='online')R();
@@ -154,14 +159,18 @@ async function poll(){
   try{
     const d=await api('GET','');const wasOff=PQ.off>=2;PQ.off=0;if(!d){if(wasOff)R();return}
     let sd=d.sd;if(PQ.sd!=null){if(sd===PQ.sd)PQ.sd=null;else sd=PQ.sd}   /* my restart is still on its way */
-    const F=[],D=[];
-    if(sd===d.sd)for(let t=0;t<TURNS;t++){F[t]=d.f&&d.f[t]!=null?1:null;D[t]=d.d&&d.d[t]!=null?d.d[t]:null}
+    const F=[],D=[],A=[],G=[];
+    if(sd===d.sd)for(let t=0;t<TURNS;t++){F[t]=d.f&&d.f[t]!=null?1:null;D[t]=d.d&&d.d[t]!=null?d.d[t]:null;G[t]=d.g&&d.g[t]!=null?1:null;A[t]=d.a&&typeof d.a[t]==='string'?d.a[t].slice(0,200):''}
     if(PQ.f!=null){if(F[PQ.f]!=null)PQ.f=null;else F[PQ.f]=1}
     if(PQ.d){if(D[PQ.d.t]!=null)PQ.d=null;else D[PQ.d.t]=PQ.d.v}
+    if(PQ.g!=null){if(G[PQ.g]!=null)PQ.g=null;else G[PQ.g]=1}
+    if(PQ.a){if(A[PQ.a.t]===PQ.a.v)PQ.a=null;else A[PQ.a.t]=PQ.a.v}
+    let t0=0;while(t0<TURNS&&D[t0]!=null)t0++;
+    const mine=t0<TURNS&&S.seat===t0%2;if(mine&&S.A[t0]!=null&&sd===S.sd)A[t0]=S.A[t0];   /* whoever is typing keeps their own text */
     const nms=fromRoom(d);if(S.me&&!nms[S.seat])nms[S.seat]=S.me;const md=d.md||0;
-    const k=JSON.stringify([sd,md,F,D,nms,waiting()]);if(k===S.last&&!wasOff)return;
+    const k=JSON.stringify([sd,md,F,D,G,mine?null:A,nms,waiting()]);if(k===S.last&&!wasOff)return;
     if(sd!==S.sd){S.shown=-1;S.anim=-1}
-    S.last=k;S.sd=sd;S.md=md;S.F=F;S.D=D;S.nm=nms;R();
+    S.last=k;S.sd=sd;S.md=md;S.F=F;S.D=D;S.G=G;S.A=A;S.nm=nms;R();
   }catch(e){PQ.off++;if(PQ.off===2){S.last='';R()}}
 }
 
@@ -183,14 +192,22 @@ function flip(){
   if(S.m==='online'){if(S.seat!==t%2)return;S.F[t]=1;PQ.f=t;R();flush();return}
   S.F[t]=1;R();
 }
+function send(){   /* online: the player hands the answer to the judge */
+  const t=cur();if(t>=TURNS||S.m!=='online'||S.seat!==t%2||S.shown!==t||S.G[t]!=null)return;
+  const v=(S.A[t]||'').trim();if(v)PQ.a={t,v:S.A[t]};S.G[t]=1;PQ.g=t;R();flush();
+}
+function typing(v){
+  const t=cur();if(S.m!=='online'||S.seat!==t%2||S.G[t]!=null)return;
+  S.A[t]=v.slice(0,200);clearTimeout(S.typeT);S.typeT=setTimeout(()=>{if(S.A[t]&&S.A[t].trim()){PQ.a={t,v:S.A[t]};flush()}},350);
+}
 function decide(v){
   const t=cur();if(t>=TURNS||S.F[t]==null||S.D[t]!=null)return;
-  if(S.m==='online'){if(S.seat===t%2)return;S.D[t]=v;PQ.d={t,v};R();flush();return}
+  if(S.m==='online'){if(S.seat===t%2||S.G[t]==null)return;S.D[t]=v;PQ.d={t,v};R();flush();return}
   S.D[t]=v;R();
 }
 function again(){
-  if(S.m==='online'){const sd=nextSd(S.sd);PQ.sd=sd;PQ.f=PQ.d=null;S.sd=sd;S.F=[];S.D=[];S.last='';S.shown=-1;S.anim=-1;R();flush();return}
-  S.sd=newSd();S.F=[];S.D=[];S.shown=-1;S.anim=-1;R();
+  if(S.m==='online'){const sd=nextSd(S.sd);PQ.sd=sd;PQ.f=PQ.d=null;S.sd=sd;S.F=[];S.D=[];S.A=[];S.G=[];S.last='';S.shown=-1;S.anim=-1;R();flush();return}
+  S.sd=newSd();S.F=[];S.D=[];S.A=[];S.G=[];S.shown=-1;S.anim=-1;R();
 }
 function leave(){clearInterval(S.tm);resetQ();LS.del('qd_room');S=fresh();R()}
 async function invite(){
@@ -218,10 +235,10 @@ function R(){
     const msg=sc[0]===sc[1]?'تعادل 🤝':`🏆 ${nm(sc[0]>sc[1]?0:1)} كسب!`;
     V.innerHTML=head()+strip+`<div class="big">🏆</div><div class="res">${msg}</div><p class="t">${sc[0]} : ${sc[1]}</p><button class="btn" data-act="again">العبوا تاني 🔁</button>`+foot;return;
   }
-  const c=card(t),flipped=S.F[t]!=null,landed=flipped&&S.shown===t,canFlip=!flipped&&(!online||me===p),canJudge=landed&&(!online||me!==p);
+  const c=card(t),flipped=S.F[t]!=null,landed=flipped&&S.shown===t,canFlip=!flipped&&(!online||me===p),sent=S.G[t]!=null,canJudge=landed&&(!online||(me!==p&&sent));
   if(online){
     if(!flipped&&me===p&&seen!=='f'+S.sd+t){seen='f'+S.sd+t;ping('دورك تقلب العملة 🪙')}
-    if(flipped&&me!==p&&seen!=='j'+S.sd+t){seen='j'+S.sd+t;ping('اتقلبت العملة، دورك تحكم 👀')}
+    if(sent&&me!==p&&seen!=='j'+S.sd+t){seen='j'+S.sd+t;ping('الإجابة وصلت، دورك تحكم 👀')}
   }
   let last='';if(t>0&&!flipped){const lc=card(t-1);last=`<div class="last">${S.D[t-1]===1?`✅ ${nm((t-1)%2)} خد +${lc.p}`:`⏭ ${nm((t-1)%2)} تخطّى`}</div>`}
   const cnt=`<div class="cnt">الدور ${t+1} من ${TURNS} · ${nm(p)} · ${MD[S.md]}</div>`;
@@ -232,9 +249,15 @@ function R(){
     body=`<div id="coin" class="coin s${S.face} spin">${S.face?'اعمل':'قول'}</div><div class="note">العملة بتلف… 🪙</div>`;
   }else{
     body=`<div class="coin s${c.side}">${c.side?'اعمل':'قول'}</div><div class="cd ${c.side?'do':'say'}"><div class="ch"><span>${c.side?'اعمل 🎬':'قول 🗣️'}</span><span>${'🚶'.repeat(c.p)} ${c.p===1?'نقطة':'نقطتين'}</span></div><div class="cb"><div>${c.side?'<small>المطلوب</small>':''}${esc(c.t)}</div></div></div>`+
-      (canJudge?`<button class="btn ok" data-act="done">✅ تم التنفيذ (+${c.p})</button><button class="btn alt" data-act="skip">⏭ تخطّي (0)</button>`:`<div class="note">${online?`⏳ في انتظار حُكم ${nm(1-p)}`:''}</div>`);
+      (online?(me===p
+        ?`<div class="lbx"><p>الإجابة هنا (ولو المطلوب بيتنفّذ برا اللعبة، يكفي كلمة «تم»):</p><textarea id="at" maxlength="200" placeholder="اكتب هنا..." ${sent?'readonly':''}>${esc(S.A[t]||'')}</textarea></div>${sent?`<div class="note">⏳ في انتظار حُكم ${nm(1-p)}</div>`:'<button class="btn" data-act="send">✔ إرسال للحُكم</button>'}`
+        :`<div class="lbx"><p>إجابة ${nm(p)}:</p><div class="ans">${esc(S.A[t]||'')||'…'}</div></div>${sent?'':`<div class="note">⏳ في انتظار ${nm(p)} يرسل الإجابة</div>`}`)
+       :'')+
+      (canJudge?`<button class="btn ok" data-act="done">✅ تم التنفيذ (+${c.p})</button><button class="btn alt" data-act="skip">⏭ تخطّي (0)</button>`:'');
   }
+  const ta0=$('#at'),had=ta0&&document.activeElement===ta0,pos=ta0?ta0.selectionStart:0;
   V.innerHTML=head()+strip+cnt+last+body+foot;
+  const ta1=$('#at');if(had&&ta1&&!ta1.readOnly){ta1.focus();try{ta1.setSelectionRange(pos,pos)}catch(e){}}
   if(flipped&&!landed)startCoin(t);
 }
 /* the coin flips for a couple of seconds, changing face, and lands on the result before the card shows */
@@ -280,12 +303,13 @@ const onClick=e=>{
   else if(a==='askgo'){const me=clean($('#nm2').value);if(!me){S.err='اكتب اسمك الأول.';return R()}const t=S.ask;keep([me,saved()[1]||'']);S.ask=null;S.err='';t==='new'?create(me):join(t,me)}
   else if(a==='onl'){S.open=!S.open;R()}
   else if(a==='new')create();else if(a==='join')join($('#rc').value);
-  else if(a==='flip')flip();else if(a==='done')decide(1);else if(a==='skip')decide(0);
+  else if(a==='flip')flip();else if(a==='send')send();else if(a==='done')decide(1);else if(a==='skip')decide(0);
   else if(a==='again')again();else if(a==='invite')invite();else if(a==='leave')leave();
   else if(a==='share')shareGame();
   else if(a==='snd'){SND=!SND;LS.set('qd_snd',SND?'1':'0');fillDrawer()}
   else if(a==='inst'&&DP){DP.prompt();DP.userChoice.finally(()=>{DP=null;fillDrawer()})}
 };
+V.addEventListener('input',e=>{if(e.target.id==='at')typing(e.target.value)});
 V.addEventListener('click',onClick);$('#dbody').addEventListener('click',onClick);
 $('#menu').addEventListener('click',openD);$('#dx').addEventListener('click',closeD);$('#scrim').addEventListener('click',closeD);
 addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
